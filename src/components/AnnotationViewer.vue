@@ -117,6 +117,14 @@ export default class AnnotationViewer extends Vue {
     );
   }
 
+  get shouldDrawAnnotations(): boolean {
+    return this.store.drawAnnotations;
+  }
+
+  get shouldDrawConnections(): boolean {
+    return this.store.drawAnnotationConnections;
+  }
+
   getAnnotationStyle(annotation: IAnnotation) {
     const layer = this.getAnyLayerForChannel(annotation.assignment.channel);
     return getAnnotationStyleFromLayer(layer);
@@ -173,6 +181,12 @@ export default class AnnotationViewer extends Vue {
     if (!this.annotationLayer) {
       return;
     }
+
+    if (!this.store.drawAnnotations) {
+      this.clearOldAnnotations(true);
+      return;
+    }
+
     // We want to ignore these already displayed annotations
     const displayedIds = this.annotationLayer
       .annotations()
@@ -218,6 +232,7 @@ export default class AnnotationViewer extends Vue {
           ({ id }) => id === childId
         );
         if (
+          !this.shouldDrawConnections ||
           !parent ||
           !child ||
           !this.shouldDisplayAnnotation(parent) ||
@@ -252,28 +267,30 @@ export default class AnnotationViewer extends Vue {
         const newGeoJSAnnotation = this.createGeoJSAnnotation(annotation);
         this.annotationLayer.addAnnotation(newGeoJSAnnotation);
 
-        this.annotationStore.annotationConnections
-          .filter(
-            (connection: IAnnotationConnection) =>
-              connection.parentId === annotation.id
-          )
-          .forEach((connection: IAnnotationConnection) => {
-            // Draw lines as a way to show the connections
-            const childAnnotation = this.annotationStore.annotations.find(
-              (child: IAnnotation) => child.id === connection.childId
-            );
-            if (
-              !childAnnotation ||
-              !this.shouldDisplayAnnotation(childAnnotation)
-            ) {
-              return;
-            }
-            this.drawGeoJSAnnotationFromConnection(
-              connection,
-              childAnnotation,
-              annotation
-            );
-          });
+        if (this.shouldDrawConnections) {
+          this.annotationStore.annotationConnections
+            .filter(
+              (connection: IAnnotationConnection) =>
+                connection.parentId === annotation.id
+            )
+            .forEach((connection: IAnnotationConnection) => {
+              // Draw lines as a way to show the connections
+              const childAnnotation = this.annotationStore.annotations.find(
+                (child: IAnnotation) => child.id === connection.childId
+              );
+              if (
+                !childAnnotation ||
+                !this.shouldDisplayAnnotation(childAnnotation)
+              ) {
+                return;
+              }
+              this.drawGeoJSAnnotationFromConnection(
+                connection,
+                childAnnotation,
+                annotation
+              );
+            });
+        }
       });
   }
 
@@ -308,6 +325,9 @@ export default class AnnotationViewer extends Vue {
     parent: IAnnotation,
     child: IAnnotation
   ) {
+    if (!this.store.drawAnnotationConnections) {
+      return;
+    }
     const anyImage = this.store.dataset?.anyImage();
 
     if (!anyImage) {
@@ -577,6 +597,12 @@ export default class AnnotationViewer extends Vue {
   @Watch("time")
   @Watch("layerAnnotations")
   onLayerAnnotationsChanged() {
+    this.drawAnnotations();
+  }
+
+  @Watch("shouldDrawAnnotations")
+  @Watch("shouldDrawConnections")
+  onSettingsChanged() {
     this.drawAnnotations();
   }
 
