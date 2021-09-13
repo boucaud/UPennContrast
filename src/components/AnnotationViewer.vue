@@ -5,6 +5,7 @@
 import { Vue, Component, Watch, Prop } from "vue-property-decorator";
 import store from "@/store";
 import geojs from "geojs";
+import { snapCoordinates } from "@/utils/itk";
 
 import {
   IAnnotation,
@@ -14,7 +15,7 @@ import {
   IToolConfiguration
 } from "../store/model";
 
-import { logWarning } from "@/utils/log";
+import { logError, logWarning } from "@/utils/log";
 
 import {
   getAnnotationStyleFromLayer,
@@ -39,6 +40,12 @@ export default class AnnotationViewer extends Vue {
 
   @Prop()
   readonly unrollW: any;
+
+  @Prop()
+  readonly imageLayers: any;
+
+  @Prop()
+  readonly map: any;
 
   get configuration() {
     return this.store.configuration;
@@ -360,17 +367,8 @@ export default class AnnotationViewer extends Vue {
     if (!newAnnotation) {
       return;
     }
-
-    // Save the new annotation
-    this.store.addAnnotation(newAnnotation);
-    this.store.syncAnnotations();
-
-    this.addAnnotationConnections(newAnnotation);
-
-    // Display the new annotation
-    const newGeoJSAnnotation = this.createGeoJSAnnotation(newAnnotation);
+    this.addAnnotation(newAnnotation);
     this.annotationLayer.removeAnnotation(annotation);
-    this.annotationLayer.addAnnotation(newGeoJSAnnotation);
   }
 
   private addAnnotationConnections(annotation: IAnnotation) {
@@ -429,6 +427,73 @@ export default class AnnotationViewer extends Vue {
       }
     }
   }
+  addAnnotation(annotation: IAnnotation | null) {
+    if (!annotation) {
+      return;
+    }
+    // Save the new annotation
+    this.store.addAnnotation(annotation);
+    this.store.syncAnnotations();
+    this.addAnnotationConnections(annotation);
+
+    // Display the new annotation
+    const newGeoJSAnnotation = this.createGeoJSAnnotation(annotation);
+    this.annotationLayer.addAnnotation(newGeoJSAnnotation);
+  }
+
+  async addAnnotationFromSnapping(annotation: any) {
+    if (!annotation) {
+      return;
+    }
+
+    const coordinates = annotation.coordinates();
+    this.annotationLayer.removeAnnotation(annotation);
+
+    const tool = this.selectedTool;
+    const location = tool.values.annotation.coordinateAssignments;
+    if (!location) {
+      logError("Invalid snapping tool, annotation was not configured properly");
+      return;
+    }
+
+    const layer = location.layer;
+    const layerImage = this.imageLayers[layer * 2];
+    if (!layerImage) {
+      return;
+    }
+
+    // Capture a screenshot of the layer
+    this.annotationLayer.visible(false);
+    const imageUrl: string = await this.map.screenshot(layerImage);
+    this.annotationLayer.visible(true);
+
+    // Convert the screenshot data-uri to an array
+    const response: Response = await fetch(imageUrl);
+    const blob: Blob = await response.blob();
+    const array = new Uint8Array(await blob.arrayBuffer());
+
+    // Compute snapped coordinates
+    const snappedCoordinates = await snapCoordinates(
+      coordinates,
+      array,
+      tool,
+      this.map
+    );
+    if (!snappedCoordinates || !snappedCoordinates.length) {
+      logError("Failed to compute new coordinates for the snapping tool");
+      return;
+    }
+
+    // Create the new annotation
+    const newAnnotation: IAnnotation | null = this.createAnnotationFromTool(
+      snappedCoordinates,
+      tool
+    );
+    if (!newAnnotation) {
+      return;
+    }
+    this.addAnnotation(newAnnotation);
+  }
 
   refreshAnnotationMode() {
     if (!this.selectedTool || this.unrolling) {
@@ -439,6 +504,9 @@ export default class AnnotationViewer extends Vue {
       case "create":
         const annotation = this.selectedTool.values.annotation;
         this.annotationLayer.mode(annotation?.shape);
+        break;
+      case "snap":
+        this.annotationLayer.mode("polygon");
         break;
       default:
         logWarning(`${this.selectedTool.type} tools are not supported yet`);
@@ -461,6 +529,8 @@ export default class AnnotationViewer extends Vue {
       case "geo_annotation_state":
         if (this.selectedTool.type === "create") {
           this.addAnnotationFromGeoJsAnnotation(evt.annotation);
+        } else if (this.selectedTool.type === "snap") {
+          this.addAnnotationFromSnapping(evt.annotation);
         }
         break;
       default:
