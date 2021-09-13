@@ -5,6 +5,8 @@
       :annotationLayer="annotationLayer"
       :unrollH="unrollH"
       :unrollW="unrollW"
+      :map="map"
+      :imageLayers="imageLayers"
     ></annotation-viewer>
     <div id="map" ref="geojsmap" :data-update="reactiveDraw" />
     <div class="loading" v-if="!fullyReady">
