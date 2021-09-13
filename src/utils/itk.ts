@@ -29,7 +29,62 @@ function geoJSCoordinatesTo2DITKMesh(coordinates: IGeoJSPoint[], map: any) {
   };
 }
 
-export async function getMaximumPointInContour(
+async function getThresholdBlobInContour(
+  image: Uint8Array,
+  contour: IGeoJSPoint[] = [],
+  geoJSMap: any,
+): Promise<IGeoJSPoint[]> {
+  const mesh = geoJSCoordinatesTo2DITKMesh(contour, geoJSMap);
+  return await new Promise((resolve, reject) => {
+    const args: string[] = ["/inimage.png", "/inpoints.json", "/out.json"];
+    const pipelineInputs = [
+      {
+        path: "/inimage.png",
+        data: image,
+        type: IOTypes.Binary
+      },
+      {
+        path: "/inpoints.json",
+        data: mesh,
+        type: IOTypes.Mesh
+      }
+    ];
+    const pipelineOutputs = [
+      {
+        path: "out.json",
+        type: IOTypes.Text
+      }
+    ];
+    return runPipelineBrowser(
+      null,
+      "Threshold",
+      args,
+      pipelineOutputs,
+      pipelineInputs
+    )
+      .then(({ outputs, webWorker }: { outputs: any; webWorker: Worker }) => {
+        if (!outputs || !outputs.length) {
+          reject();
+        }
+        const result = JSON.parse(outputs[0].data);
+        webWorker.terminate();
+        if (!result?.contour) {
+          logError(
+            "Error getting data back from the pipeline. Could not find max"
+          );
+          reject();
+        }
+        const converted = geoJSMap.displayToGcs(result.contour);
+        resolve(converted);
+      })
+      .catch((error: any) => {
+        logError(`Failed to run ITK pipeline ${error}`);
+        reject();
+      });
+  });
+}
+
+async function getMaximumPointInContour(
   image: Uint8Array,
   contour: IGeoJSPoint[] = [],
   geoJSMap: any
@@ -57,7 +112,7 @@ export async function getMaximumPointInContour(
     ];
     return runPipelineBrowser(
       null,
-      "MaxInRegion",
+      "Max",
       args,
       pipelineOutputs,
       pipelineInputs
@@ -100,9 +155,13 @@ export async function snapCoordinates(
         geoJSMap
       );
       return [point];
-      break;
     case "blobToBlob":
-      break;
+      const contour = await getThresholdBlobInContour(
+        imageArray,
+        coordinates,
+        geoJSMap,
+      );
+      return contour;
     case "edge":
       break;
     default:
