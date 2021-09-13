@@ -23,19 +23,41 @@ module.exports = {
             to: path.join(__dirname, "dist", "itk", "MeshIOs")
           },
           {
+            from: path.join(__dirname, "itk", "web-build", "Max", "Max.js"),
+            to: path.join(__dirname, "dist", "itk", "Pipelines", "Max.js")
+          },
+          {
+            from: path.join(__dirname, "itk", "web-build", "Max", "MaxWasm.js"),
+            to: path.join(__dirname, "dist", "itk", "Pipelines", "MaxWasm.js")
+          },
+          {
+            from: path.join(__dirname, "itk", "web-build", "Max", "MaxWasm.wasm"),
+            to: path.join(__dirname, "dist", "itk", "Pipelines", "MaxWasm.wasm")
+          },
+          {
             from: path.join(
               __dirname,
               "itk",
               "web-build",
-              "MaxInRegion",
-              "MaxInRegion.js"
+              "Threshold",
+              "Threshold.js"
+            ),
+            to: path.join(__dirname, "dist", "itk", "Pipelines", "Threshold.js")
+          },
+          {
+            from: path.join(
+              __dirname,
+              "itk",
+              "web-build",
+              "Threshold",
+              "ThresholdWasm.js"
             ),
             to: path.join(
               __dirname,
               "dist",
               "itk",
               "Pipelines",
-              "MaxInRegion.js"
+              "ThresholdWasm.js"
             )
           },
           {
@@ -43,31 +65,15 @@ module.exports = {
               __dirname,
               "itk",
               "web-build",
-              "MaxInRegion",
-              "MaxInRegionWasm.js"
+              "Threshold",
+              "ThresholdWasm.wasm"
             ),
             to: path.join(
               __dirname,
               "dist",
               "itk",
               "Pipelines",
-              "MaxInRegionWasm.js"
-            )
-          },
-          {
-            from: path.join(
-              __dirname,
-              "itk",
-              "web-build",
-              "MaxInRegion",
-              "MaxInRegionWasm.wasm"
-            ),
-            to: path.join(
-              __dirname,
-              "dist",
-              "itk",
-              "Pipelines",
-              "MaxInRegionWasm.wasm"
+              "ThresholdWasm.wasm"
             )
           }
         ]
