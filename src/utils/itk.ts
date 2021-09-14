@@ -163,6 +163,8 @@ export async function snapCoordinates(
       );
       return contour;
     case "edge":
+      logError("Edge snapping is not implemented yet");
+      return [];
       break;
     default:
       logError(`Unknown snapping tool type: ${snapTo}`);
