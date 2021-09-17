@@ -53,6 +53,7 @@ import TagAndLayerRestriction from "@/tools/creation/templates/TagAndLayerRestri
     VRadioGroup
   }
 })
+// Creates a tool configuration interface based on the current selected template.
 export default class ToolConfiguration extends Vue {
   readonly store = store;
 
@@ -61,6 +62,7 @@ export default class ToolConfiguration extends Vue {
 
   toolValues: any = null;
 
+  // Used to determine :is="" value from template interface type
   typeToComponentName = {
     select: "v-select",
     annotation: "annotation-configuration",
@@ -70,7 +72,7 @@ export default class ToolConfiguration extends Vue {
     text: "v-text-field"
   };
 
-  // dynamic interface elements that depend on various values being selected
+  // Dynamic interface elements that depend on various values being selected
   valueTemplates: any = {};
 
   // All interface elements that should be displayed
@@ -122,7 +124,8 @@ export default class ToolConfiguration extends Vue {
     this.$emit("input", { ...this.toolValues });
   }
 
-  @Watch("toolValues") updateValues() {
+  @Watch("toolValues")
+  updateValues() {
     this.changed();
   }
 

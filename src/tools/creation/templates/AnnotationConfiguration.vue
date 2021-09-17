@@ -96,12 +96,13 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Watch, Prop } from "vue-property-decorator";
+import { Vue, Component, Prop } from "vue-property-decorator";
 import store from "@/store";
 import { IToolConfiguration } from "@/store/model";
 
 type VForm = Vue & { validate: () => boolean };
 
+// Interface element for configuring an annotation
 @Component({
   components: {}
 })

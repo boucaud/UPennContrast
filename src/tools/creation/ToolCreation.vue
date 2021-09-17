@@ -111,6 +111,8 @@ export default class ToolCreation extends Vue {
 
         // Add this tool to the current toolset
         this.store.addToolIdsToCurrentToolset({ ids: [tool.id] });
+
+        // Save
         this.store.syncConfiguration();
 
         this.close();
