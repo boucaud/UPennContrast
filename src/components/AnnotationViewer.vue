@@ -450,6 +450,9 @@ export default class AnnotationViewer extends Vue {
     this.annotationLayer.removeAnnotation(annotation);
 
     const tool = this.selectedTool;
+    if (!tool) {
+      return;
+    }
     const location = tool.values.annotation.coordinateAssignments;
     if (!location) {
       logError("Invalid snapping tool, annotation was not configured properly");
