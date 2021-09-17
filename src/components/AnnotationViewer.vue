@@ -498,6 +498,18 @@ export default class AnnotationViewer extends Vue {
     this.addAnnotation(newAnnotation);
   }
 
+  private sliceBlob(geoJSLineAnnotation: any) {
+    if (!geoJSLineAnnotation) {
+      return;
+    }
+    const displayedAnnotations = this.annotationLayer
+      .annotations()
+      .filter((a: any) => !a.options("isConnection") && a.type !== "point");
+    displayedAnnotations.foreach((a: any) => {
+      console.log(a);
+    });
+  }
+
   refreshAnnotationMode() {
     if (!this.selectedTool || this.unrolling) {
       this.annotationLayer.mode(null);
@@ -510,6 +522,17 @@ export default class AnnotationViewer extends Vue {
         break;
       case "snap":
         this.annotationLayer.mode("polygon");
+        break;
+      case "edit":
+        const editionType: string = this.selectedTool.values.editionType.value;
+        switch (editionType) {
+          case "slice":
+            this.annotationLayer.mode("line");
+            break;
+          default:
+            logWarning(`${editionType} edition mode is not supported yet`);
+        }
+        console.log(this.selectedTool);
         break;
       default:
         logWarning(`${this.selectedTool.type} tools are not supported yet`);
@@ -534,6 +557,12 @@ export default class AnnotationViewer extends Vue {
           this.addAnnotationFromGeoJsAnnotation(evt.annotation);
         } else if (this.selectedTool.type === "snap") {
           this.addAnnotationFromSnapping(evt.annotation);
+        } else if (this.selectedTool.type === "edit") {
+          const editionType: string = this.selectedTool.values.editionType
+            .value;
+          if (editionType === "slice") {
+            this.sliceBlob(evt.event);
+          }
         }
         break;
       default:
