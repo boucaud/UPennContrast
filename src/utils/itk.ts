@@ -32,7 +32,7 @@ function geoJSCoordinatesTo2DITKMesh(coordinates: IGeoJSPoint[], map: any) {
 async function getThresholdBlobInContour(
   image: Uint8Array,
   contour: IGeoJSPoint[] = [],
-  geoJSMap: any,
+  geoJSMap: any
 ): Promise<IGeoJSPoint[]> {
   const mesh = geoJSCoordinatesTo2DITKMesh(contour, geoJSMap);
   return await new Promise((resolve, reject) => {
@@ -159,7 +159,7 @@ export async function snapCoordinates(
       const contour = await getThresholdBlobInContour(
         imageArray,
         coordinates,
-        geoJSMap,
+        geoJSMap
       );
       return contour;
     case "edge":

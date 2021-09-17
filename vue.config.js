@@ -31,7 +31,13 @@ module.exports = {
             to: path.join(__dirname, "dist", "itk", "Pipelines", "MaxWasm.js")
           },
           {
-            from: path.join(__dirname, "itk", "web-build", "Max", "MaxWasm.wasm"),
+            from: path.join(
+              __dirname,
+              "itk",
+              "web-build",
+              "Max",
+              "MaxWasm.wasm"
+            ),
             to: path.join(__dirname, "dist", "itk", "Pipelines", "MaxWasm.wasm")
           },
           {
