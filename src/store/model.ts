@@ -218,6 +218,45 @@ export interface IPropertyAnnotationFilter extends IAnnotationFilter {
   exclusive: boolean;
 }
 
+export interface IAnnotationProperty {
+  id: string;
+  name: string;
+
+  enabled: boolean;
+  computing: boolean;
+
+  requiredShape: "point" | "polygon" | "line" | null;
+
+  // If false, everytime an annotation is changed or created,
+  // needs to recompute, for all existing annotations as well.
+  // If true, only recompute for new/changed annotations
+  independant: boolean;
+
+  compute: (
+    annotations: IAnnotation[], // All annotations to compute this for
+    image?: any,
+    coordinates?: IGeoJSPoint[],
+    connections?: IAnnotationConnection[]
+  ) => Promise<void>;
+}
+
+export interface ILayerDependentAnnotationProperty extends IAnnotationProperty {
+  layer: number | null; // If null, use annotation's default layer
+  compute: (annotations: IAnnotation[], image: any) => Promise<void>;
+}
+
+export interface IRelationalAnnotationProperty extends IAnnotationProperty {
+  filter: ITagAnnotationFilter;
+  compute: (
+    annotations: IAnnotation[],
+    connections: IAnnotationConnection[]
+  ) => Promise<void>;
+}
+
+export interface IMorphologicAnnotationProperty extends IAnnotationProperty {
+  compute: (annotations: IAnnotation[]) => Promise<void>;
+}
+
 export interface IContrast {
   mode: "percentile" | "absolute";
   blackPoint: number;
