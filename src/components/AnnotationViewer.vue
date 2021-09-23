@@ -6,6 +6,7 @@ import { Vue, Component, Watch, Prop } from "vue-property-decorator";
 import store from "@/store";
 import annotationStore from "@/store/annotation";
 import toolsStore from "@/store/tool";
+import propertiesStore from "@/store/properties";
 
 import geojs from "geojs";
 import { snapCoordinates } from "@/utils/itk";
@@ -37,6 +38,7 @@ export default class AnnotationViewer extends Vue {
   readonly store = store;
   readonly annotationStore = annotationStore;
   readonly toolsStore = toolsStore;
+  readonly propertiesStore = propertiesStore;
 
   @Prop()
   readonly annotationLayer: any;
@@ -415,7 +417,7 @@ export default class AnnotationViewer extends Vue {
 
   private addAnnotationConnections(annotation: IAnnotation) {
     if (!this.selectedTool) {
-      return;
+      return [];
     }
     const connectTo = this.selectedTool.values.connectTo;
     // Look for connections
@@ -467,8 +469,11 @@ export default class AnnotationViewer extends Vue {
           annotation,
           closest
         );
+
+        return [newConnection];
       }
     }
+    return [];
   }
   addAnnotation(annotation: IAnnotation | null) {
     if (!annotation) {
@@ -477,7 +482,12 @@ export default class AnnotationViewer extends Vue {
     // Save the new annotation
     this.annotationStore.addAnnotation(annotation);
     this.annotationStore.syncAnnotations();
-    this.addAnnotationConnections(annotation);
+    const newConnections = this.addAnnotationConnections(annotation);
+
+    // Compute properties
+    this.propertiesStore
+      .handleNewAnnotation(annotation, newConnections, null)
+      .then(() => this.annotationStore.syncAnnotations());
 
     // Display the new annotation
     const newGeoJSAnnotation = this.createGeoJSAnnotation(annotation);

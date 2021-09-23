@@ -30,8 +30,8 @@ function canAnnotationHaveProperty(
   return property.enabled && property.computing;
 }
 
-@Module({ dynamic: true, store, name: "annotation" })
-export class Annotations extends VuexModule {
+@Module({ dynamic: true, store, name: "properties" })
+export class Properties extends VuexModule {
   morphologicProperties: IMorphologicAnnotationProperty[] = [
     {
       id: "length",
@@ -75,8 +75,6 @@ export class Annotations extends VuexModule {
 
   layerDependantProperties: ILayerDependentAnnotationProperty[] = [];
 
-  busy: Promise<void> | null = null;
-
   get properties(): IAnnotationProperty[] {
     return [
       ...this.morphologicProperties,
@@ -91,29 +89,26 @@ export class Annotations extends VuexModule {
     newConnections: IAnnotationConnection[],
     image: any
   ) {
-    const promise = Promise.all([
-      ...this.morphologicProperties.map(
-        (property: IMorphologicAnnotationProperty) =>
+    const shapeFilter = (property: IAnnotationProperty) =>
+      property.requiredShape !== null &&
+      property.requiredShape === newAnnotation.shape;
+    return Promise.all([
+      ...this.morphologicProperties
+        .filter(shapeFilter)
+        .map((property: IMorphologicAnnotationProperty) =>
           property.compute([newAnnotation])
-      ),
-      ...this.layerDependantProperties.map(
-        (property: ILayerDependentAnnotationProperty) =>
+        ),
+      ...this.layerDependantProperties
+        .filter(shapeFilter)
+        .map((property: ILayerDependentAnnotationProperty) =>
           property.compute([newAnnotation], image)
-      ),
-      ...this.relationalProperties.map(
-        (property: IRelationalAnnotationProperty) =>
+        ),
+      ...this.relationalProperties
+        .filter(shapeFilter)
+        .map((property: IRelationalAnnotationProperty) =>
           property.compute([newAnnotation], newConnections)
-      )
-    ]).then(() => {
-      this.busy = null;
-    });
-    if (this.busy) {
-      this.busy.then(() => {
-        this.busy = promise;
-      });
-    } else {
-      this.busy = promise;
-    }
+        )
+    ]);
   }
 
   @Action
@@ -122,4 +117,4 @@ export class Annotations extends VuexModule {
   }
 }
 
-export default getModule(Annotations);
+export default getModule(Properties);
