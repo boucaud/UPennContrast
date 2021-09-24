@@ -14,6 +14,9 @@
       <v-btn @click.stop="annotationPanel = !annotationPanel"
         >Browse Annotations</v-btn
       >
+      <v-btn @click.stop="propertiesPanel = !propertiesPanel"
+        >Annotation Properties</v-btn
+      >
       <server-status />
     </v-app-bar>
 
@@ -48,6 +51,18 @@
     >
       <annotation-browser></annotation-browser>
     </v-navigation-drawer>
+
+    <v-navigation-drawer
+      v-model="propertiesPanel"
+      app
+      right
+      disable-resize-watcher
+      clipped
+      hide-overlay
+      :width="640"
+    >
+      <properties-browser></properties-browser>
+    </v-navigation-drawer>
   </v-app>
 </template>
 
@@ -58,6 +73,7 @@ import UserMenu from "./layout/UserMenu.vue";
 import ServerStatus from "./components/ServerStatus.vue";
 import Snapshots from "./components/Snapshots.vue";
 import AnnotationBrowser from "@/components/AnnotationBrowser/AnnotationBrowser.vue";
+import PropertiesBrowser from "@/components/AnnotationProperty.vue";
 import BreadCrumbs from "./layout/BreadCrumbs.vue";
 import vMousetrap from "./utils/v-mousetrap";
 import { Vue, Component, Prop } from "vue-property-decorator";
@@ -68,6 +84,7 @@ Vue.use(vMousetrap);
 @Component({
   components: {
     AnnotationBrowser,
+    PropertiesBrowser,
     Menu,
     UserMenu,
     BreadCrumbs,
@@ -82,6 +99,7 @@ export default class App extends Vue {
   snapshotPanelFull = false;
 
   annotationPanel = false;
+  propertiesPanel = false;
 
   fetchConfig() {
     // Fetch the list of available tool templates
