@@ -195,9 +195,10 @@ export interface IAnnotationConnection {
 }
 
 export interface IAnnotationFilter {
-  check: (annotation: IAnnotation) => boolean;
+  // check: (annotation: IAnnotation) => boolean;
 }
 
+// TODO: these really should be classes
 export interface ITagAnnotationFilter extends IAnnotationFilter {
   tags: string[];
   exclusive: boolean;
@@ -218,6 +219,11 @@ export interface IPropertyAnnotationFilter extends IAnnotationFilter {
   exclusive: boolean;
 }
 
+export interface IAnnotationPropertyComputeParameters {
+  annotations: IAnnotation[];
+  connections?: IAnnotationConnection[];
+  image?: any; // TODO: arraybuffer?
+}
 export interface IAnnotationProperty {
   id: string;
   name: string;
@@ -225,36 +231,25 @@ export interface IAnnotationProperty {
   enabled: boolean;
   computing: boolean;
 
-  requiredShape: "point" | "polygon" | "line" | null;
-
-  // If false, everytime an annotation is changed or created,
-  // needs to recompute, for all existing annotations as well.
-  // If true, only recompute for new/changed annotations
-  independant: boolean;
-
-  compute: (
-    annotations: IAnnotation[], // All annotations to compute this for
-    image?: any,
-    coordinates?: IGeoJSPoint[],
-    connections?: IAnnotationConnection[]
-  ) => Promise<void>;
+  compute: (parameters: IAnnotationPropertyComputeParameters) => Promise<void>;
 }
 
 export interface ILayerDependentAnnotationProperty extends IAnnotationProperty {
   layer: number | null; // If null, use annotation's default layer
-  compute: (annotations: IAnnotation[], image: any) => Promise<void>;
 }
 
 export interface IRelationalAnnotationProperty extends IAnnotationProperty {
   filter: ITagAnnotationFilter;
-  compute: (
-    annotations: IAnnotation[],
-    connections: IAnnotationConnection[]
-  ) => Promise<void>;
+
+  // If false, everytime an annotation is changed or created,
+  // needs to recompute, for all existing annotations as well.
+  // If true, only recompute for new/changed annotations
+  // TODO: not necessary for morphologic/layerDependant ?
+  independant: boolean;
 }
 
 export interface IMorphologicAnnotationProperty extends IAnnotationProperty {
-  compute: (annotations: IAnnotation[]) => Promise<void>;
+  requiredShape: "point" | "polygon" | "line" | null;
 }
 
 export interface IContrast {

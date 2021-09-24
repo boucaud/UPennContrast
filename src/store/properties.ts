@@ -17,19 +17,13 @@ import {
   IMorphologicAnnotationProperty,
   IAnnotationProperty,
   IRelationalAnnotationProperty,
-  ILayerDependentAnnotationProperty
+  ILayerDependentAnnotationProperty,
+  IAnnotationPropertyComputeParameters,
+  ITagAnnotationFilter
 } from "./model";
 
-function canAnnotationHaveProperty(
-  annotation: IAnnotation,
-  property: IAnnotationProperty
-) {
-  if (property.requiredShape && annotation.shape !== property.requiredShape) {
-    return false;
-  }
-  return property.enabled && property.computing;
-}
-
+// TODO: mutations for properties
+// TODO: this means we probably need to regroup them all under one array
 @Module({ dynamic: true, store, name: "properties" })
 export class Properties extends VuexModule {
   morphologicProperties: IMorphologicAnnotationProperty[] = [
@@ -42,9 +36,7 @@ export class Properties extends VuexModule {
 
       requiredShape: "line",
 
-      independant: true,
-
-      async compute(annotations: IAnnotation[]) {
+      async compute({ annotations }: IAnnotationPropertyComputeParameters) {
         this.computing = false;
         annotations.forEach((annotation: IAnnotation) => {
           annotation.computedValues[this.id] = Math.random() * 1000;
@@ -59,9 +51,8 @@ export class Properties extends VuexModule {
       enabled: false,
       computing: true,
       requiredShape: "polygon",
-      independant: true,
 
-      async compute(annotations: IAnnotation[]) {
+      async compute({ annotations }: IAnnotationPropertyComputeParameters) {
         this.computing = false;
         annotations.forEach((annotation: IAnnotation) => {
           annotation.computedValues[this.id] = Math.random() * 1000;
@@ -71,9 +62,56 @@ export class Properties extends VuexModule {
     }
   ];
 
-  relationalProperties: IRelationalAnnotationProperty[] = [];
+  relationalProperties: IRelationalAnnotationProperty[] = [
+    {
+      id: "numberOfConnected",
+      name: "Number Of Connected",
 
-  layerDependantProperties: ILayerDependentAnnotationProperty[] = [];
+      enabled: true,
+      computing: false,
+
+      independant: true,
+
+      filter: {
+        tags: ["cell", "some tag"],
+        exclusive: true,
+        enabled: true
+      },
+
+      async compute({
+        annotations,
+        connections
+      }: IAnnotationPropertyComputeParameters) {
+        annotations.forEach((annotation: IAnnotation) => {
+          annotation.computedValues[this.id] = connections?.length || 0;
+        });
+      }
+    }
+  ];
+
+  layerDependantProperties: ILayerDependentAnnotationProperty[] = [
+    {
+      id: "averageIntensity",
+      name: "Average Intensity",
+
+      enabled: false,
+      computing: false,
+
+      layer: 0,
+
+      async compute({
+        annotations,
+        image
+      }: IAnnotationPropertyComputeParameters) {
+        if (!image) {
+          return;
+        }
+        annotations.forEach((annotation: IAnnotation) => {
+          annotation.computedValues[this.id] = Math.random() * 100;
+        });
+      }
+    }
+  ];
 
   get properties(): IAnnotationProperty[] {
     return [
@@ -89,25 +127,26 @@ export class Properties extends VuexModule {
     newConnections: IAnnotationConnection[],
     image: any
   ) {
-    const shapeFilter = (property: IAnnotationProperty) =>
+    const shapeFilter = (property: IMorphologicAnnotationProperty) =>
       property.requiredShape !== null &&
       property.requiredShape === newAnnotation.shape;
     return Promise.all([
       ...this.morphologicProperties
         .filter(shapeFilter)
         .map((property: IMorphologicAnnotationProperty) =>
-          property.compute([newAnnotation])
+          property.compute({ annotations: [newAnnotation] })
         ),
-      ...this.layerDependantProperties
-        .filter(shapeFilter)
-        .map((property: ILayerDependentAnnotationProperty) =>
-          property.compute([newAnnotation], image)
-        ),
-      ...this.relationalProperties
-        .filter(shapeFilter)
-        .map((property: IRelationalAnnotationProperty) =>
-          property.compute([newAnnotation], newConnections)
-        )
+      ...this.layerDependantProperties.map(
+        (property: ILayerDependentAnnotationProperty) =>
+          property.compute({ annotations: [newAnnotation], image })
+      ),
+      ...this.relationalProperties.map(
+        (property: IRelationalAnnotationProperty) =>
+          property.compute({
+            annotations: [newAnnotation],
+            connections: newConnections
+          })
+      )
     ]);
   }
 
