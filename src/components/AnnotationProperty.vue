@@ -1,10 +1,25 @@
 <template>
   <v-container>
     <v-subheader>
-      Computed Annotation Properties
+      Property Calculator
     </v-subheader>
-    <v-row v-for="property in properties" :key="property.id">
-      <v-col></v-col>
+    <span>Layer dependent properties</span>
+    <v-row v-for="property in layerDependantProperties" :key="property.id">
+      <v-col>
+        {{ property.name }}
+      </v-col>
+    </v-row>
+    <span>Morphology Properties</span>
+    <v-row v-for="property in morphologicProperties" :key="property.id">
+      <v-col>
+        {{ property.name }}
+      </v-col>
+    </v-row>
+    <span>Relational Properties</span>
+    <v-row v-for="property in relationalProperties" :key="property.id">
+      <v-col>
+        {{ property.name }}
+      </v-col>
     </v-row>
   </v-container>
 </template>
@@ -19,8 +34,15 @@ export default class AnnotationProperties extends Vue {
   readonly store = store;
   readonly propertyStore = propertyStore;
 
-  get properties() {
-    return propertyStore.properties;
+  get morphologicProperties() {
+    return propertyStore.morphologicProperties;
+  }
+
+  get layerDependantProperties() {
+    return propertyStore.layerDependantProperties;
+  }
+  get relationalProperties() {
+    return propertyStore.relationalProperties;
   }
 }
 </script>
