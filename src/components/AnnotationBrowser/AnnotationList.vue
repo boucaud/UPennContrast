@@ -1,7 +1,7 @@
 <template>
   <div>
     <v-subheader>Annotation List</v-subheader>
-    <v-data-table :items="filteredAnnotations" :headers="headers">
+    <v-data-table :items="filtered" :headers="headers">
       <!-- Tags -->
       <template v-slot:item.tags="{ item }">
         <v-chip
@@ -23,45 +23,63 @@
 <script lang="ts">
 import { Vue, Component, Prop, Emit } from "vue-property-decorator";
 import store from "@/store";
-import { IAnnotation } from "@/store/model";
+import annotationStore from "@/store/annotation";
+import propertyStore from "@/store/properties";
+
+import { IAnnotation, IAnnotationProperty } from "@/store/model";
 
 @Component({
   components: {}
 })
 export default class AnnotationList extends Vue {
   readonly store = store;
-  log(item: any) {
-    console.log(item);
-  }
-  // TODO: fetch for other configurations ?
-  get annotations(): IAnnotation[] {
-    return this.store.annotations;
+  readonly annotationStore = annotationStore;
+  readonly propertyStore = propertyStore;
+
+  get annotations() {
+    return this.annotationStore.annotations;
   }
 
-  get filteredAnnotations(): IAnnotation[] {
-    return this.filters.reduce(
-      (annotations, filter) => annotations.filter(filter),
-      this.annotations
+  get filtered() {
+    return this.annotationStore.filteredAnnotations;
+  }
+
+  get propertyIds() {
+    return this.propertyStore.annotationListIds;
+  }
+
+  get properties() {
+    return [
+      ...this.propertyStore.morphologicProperties,
+      ...this.propertyStore.relationalProperties,
+      ...this.propertyStore.layerDependantProperties
+    ].filter((property: IAnnotationProperty) =>
+      this.propertyIds.includes(property.id)
     );
   }
 
-  headers = [
-    {
-      text: "Annotation Index",
-      value: "id"
-    },
-    {
-      text: "Shape",
-      value: "shape"
-    },
-    {
-      text: "Tags",
-      value: "tags"
-    }
-  ];
+  get headers() {
+    return [
+      {
+        text: "Annotation Index",
+        value: "id"
+      },
+      {
+        text: "Shape",
+        value: "shape"
+      },
+      {
+        text: "Tags",
+        value: "tags"
+      },
+      ...this.properties.map((property: IAnnotationProperty) => ({
+        text: property.name,
+        value: property.id
+      }))
+    ];
+  }
 
-  @Prop()
-  readonly filters!: { (annotation: IAnnotation): boolean }[];
+  // TODO: all properties with property.list as header (even if not computed)
 
   @Emit("clickedTag")
   clickedTag(tag: string) {

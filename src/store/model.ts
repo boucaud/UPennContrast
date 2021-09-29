@@ -195,15 +195,14 @@ export interface IAnnotationConnection {
 }
 
 export interface IAnnotationFilter {
-  // check: (annotation: IAnnotation) => boolean;
+  id: string;
+  exclusive: boolean;
+  enabled: boolean;
 }
 
 // TODO: these really should be classes
 export interface ITagAnnotationFilter extends IAnnotationFilter {
   tags: string[];
-  exclusive: boolean;
-  // TODO: Might be redundant
-  enabled: boolean;
 }
 
 export interface IPropertyAnnotationFilter extends IAnnotationFilter {
@@ -216,20 +215,23 @@ export interface IPropertyAnnotationFilter extends IAnnotationFilter {
   log: boolean;
   cdf: boolean;
   // Whether to exclude or include annotations that don't have the property
-  exclusive: boolean;
 }
 
+export interface IROIAnnotationFilter extends IAnnotationFilter {
+  roi: IGeoJSPoint[];
+}
 export interface IAnnotationPropertyComputeParameters {
   annotations: IAnnotation[];
   connections?: IAnnotationConnection[];
   image?: any; // TODO: arraybuffer?
 }
+
 export interface IAnnotationProperty {
   id: string;
   name: string;
 
   enabled: boolean;
-  computing: boolean;
+  computed: boolean;
 
   compute: (parameters: IAnnotationPropertyComputeParameters) => Promise<void>;
 }

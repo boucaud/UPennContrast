@@ -3,59 +3,62 @@
     <v-card-title>
       Property Calculator
     </v-card-title>
-    <v-card-subtitle>Layer dependent properties</v-card-subtitle>
+    <v-card-subtitle class="pa-2">Layer dependent properties</v-card-subtitle>
     <v-card-text>
       <v-container>
-        <v-row v-for="property in layerDependantProperties" :key="property.id">
-          <v-col ncols="2">
-            <v-checkbox
-              v-model="property.enabled"
-              :label="property.name"
-            ></v-checkbox>
+        <v-row class="pa-1">
+          <v-col v-for="header in headers" :key="header" class="pa-0">
+            {{ header }}
           </v-col>
-          <v-col>
-            <!-- layer -->
-            <v-select
-              :items="layerItems"
-              item-text="label"
-              dense
-              v-model="property.layer"
-            />
+          <v-col class="pa-0" cols="8">
+            Property
           </v-col>
         </v-row>
+        <annotation-property
+          v-for="property in layerDependantProperties"
+          :key="property.id"
+          :property="property"
+        ></annotation-property>
       </v-container>
     </v-card-text>
-    <v-card-subtitle>
+    <v-card-subtitle class="pa-2">
       <span>Morphology Properties</span>
     </v-card-subtitle>
     <v-card-text>
       <v-container>
-        <v-row v-for="property in morphologicProperties" :key="property.id">
-          <v-col cols="1">
-            <v-checkbox
-              v-model="property.enabled"
-              :label="property.name"
-            ></v-checkbox>
+        <v-row class="pa-1">
+          <v-col v-for="header in headers" :key="header" class="pa-0">
+            {{ header }}
+          </v-col>
+          <v-col class="pa-0" cols="8">
+            Property
           </v-col>
         </v-row>
+        <annotation-property
+          v-for="property in morphologicProperties"
+          :key="property.id"
+          :property="property"
+        ></annotation-property>
       </v-container>
     </v-card-text>
-    <v-card-subtitle>
+    <v-card-subtitle class="pa-2">
       <span>Relational Properties</span>
     </v-card-subtitle>
     <v-card-text>
       <v-container>
-        <v-row v-for="property in relationalProperties" :key="property.id">
-          <v-col>
-            <v-checkbox
-              v-model="property.enabled"
-              :label="property.name"
-            ></v-checkbox>
+        <v-row>
+          <v-col v-for="header in headers" :key="header" class="pa-1">
+            {{ header }}
           </v-col>
-          <v-col>
-            <tag-filter-editor :filter="property.filter"></tag-filter-editor>
+          <v-col class="pa-2" cols="8">
+            Property
           </v-col>
         </v-row>
+        <annotation-property
+          v-for="property in relationalProperties"
+          :key="property.id"
+          :property="property"
+        ></annotation-property>
       </v-container>
     </v-card-text>
   </v-card>
@@ -67,14 +70,19 @@ import store from "@/store";
 import propertyStore from "@/store/properties";
 
 import TagFilterEditor from "@/components/TagFilterEditor.vue";
+import AnnotationProperty from "@/components/AnnotationProperties/Property.vue";
+
 @Component({
   components: {
-    TagFilterEditor
+    TagFilterEditor,
+    AnnotationProperty
   }
 })
 export default class AnnotationProperties extends Vue {
   readonly store = store;
   readonly propertyStore = propertyStore;
+
+  private headers = ["Computed", "List", "As filter"];
 
   get morphologicProperties() {
     return propertyStore.morphologicProperties;

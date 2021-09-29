@@ -32,16 +32,16 @@ export class Properties extends VuexModule {
       name: "Length",
 
       enabled: false,
-      computing: true,
+      computed: true,
 
       requiredShape: "line",
 
       async compute({ annotations }: IAnnotationPropertyComputeParameters) {
-        this.computing = false;
+        this.computed = false;
         annotations.forEach((annotation: IAnnotation) => {
           annotation.computedValues[this.id] = Math.random() * 1000;
         });
-        this.computing = true;
+        this.computed = true;
       }
     },
     {
@@ -49,15 +49,15 @@ export class Properties extends VuexModule {
       name: "Perimeter",
 
       enabled: false,
-      computing: true,
+      computed: true,
       requiredShape: "polygon",
 
       async compute({ annotations }: IAnnotationPropertyComputeParameters) {
-        this.computing = false;
+        this.computed = false;
         annotations.forEach((annotation: IAnnotation) => {
           annotation.computedValues[this.id] = Math.random() * 1000;
         });
-        this.computing = true;
+        this.computed = true;
       }
     }
   ];
@@ -68,11 +68,12 @@ export class Properties extends VuexModule {
       name: "Number Of Connected",
 
       enabled: true,
-      computing: false,
+      computed: false,
 
       independant: true,
 
       filter: {
+        id: "numberOfConnectedFilter",
         tags: ["cell", "some tag"],
         exclusive: true,
         enabled: true
@@ -95,7 +96,7 @@ export class Properties extends VuexModule {
       name: "Average Intensity",
 
       enabled: false,
-      computing: false,
+      computed: false,
 
       layer: 0,
 
@@ -112,6 +113,39 @@ export class Properties extends VuexModule {
       }
     }
   ];
+
+  filterIds: string[] = [];
+  annotationListIds: string[] = [];
+
+  @Mutation
+  addFilterId(id: string) {
+    if (!this.filterIds.includes(id)) {
+      this.filterIds = [...this.filterIds, id];
+    }
+  }
+
+  @Mutation
+  addAnnotationListId(id: string) {
+    if (!this.annotationListIds.includes(id)) {
+      this.annotationListIds = [...this.annotationListIds, id];
+    }
+  }
+
+  @Mutation
+  removeAnnotationListId(id: string) {
+    if (this.annotationListIds.includes(id)) {
+      this.annotationListIds = this.annotationListIds.filter(
+        testId => id !== testId
+      );
+    }
+  }
+
+  @Mutation
+  removeFilterId(id: string) {
+    if (this.filterIds.includes(id)) {
+      this.filterIds = this.filterIds.filter(testId => id !== testId);
+    }
+  }
 
   get properties(): IAnnotationProperty[] {
     return [
@@ -130,23 +164,27 @@ export class Properties extends VuexModule {
     const shapeFilter = (property: IMorphologicAnnotationProperty) =>
       property.requiredShape !== null &&
       property.requiredShape === newAnnotation.shape;
+    const enabledFilter = (property: IAnnotationProperty) => property.enabled;
     return Promise.all([
       ...this.morphologicProperties
         .filter(shapeFilter)
+        .filter(enabledFilter)
         .map((property: IMorphologicAnnotationProperty) =>
           property.compute({ annotations: [newAnnotation] })
         ),
-      ...this.layerDependantProperties.map(
-        (property: ILayerDependentAnnotationProperty) =>
+      ...this.layerDependantProperties
+        .filter(enabledFilter)
+        .map((property: ILayerDependentAnnotationProperty) =>
           property.compute({ annotations: [newAnnotation], image })
-      ),
-      ...this.relationalProperties.map(
-        (property: IRelationalAnnotationProperty) =>
+        ),
+      ...this.relationalProperties
+        .filter(enabledFilter)
+        .map((property: IRelationalAnnotationProperty) =>
           property.compute({
             annotations: [newAnnotation],
             connections: newConnections
           })
-      )
+        )
     ]);
   }
 
