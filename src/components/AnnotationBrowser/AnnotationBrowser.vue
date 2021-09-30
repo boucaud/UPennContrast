@@ -1,7 +1,7 @@
 <template>
   <v-container>
     <v-row>
-      <annotation-property></annotation-property>
+      <property-list></property-list>
     </v-row>
     <v-row><annotation-toggles /></v-row>
     <v-row><annotation-filters /></v-row>
@@ -14,7 +14,7 @@ import { Vue, Component } from "vue-property-decorator";
 import AnnotationToggles from "@/components/AnnotationBrowser/AnnotationToggles.vue";
 import AnnotationFilters from "@/components/AnnotationBrowser/AnnotationFilters.vue";
 import AnnotationList from "@/components/AnnotationBrowser/AnnotationList.vue";
-import AnnotationProperty from "@/components/AnnotationProperty.vue";
+import PropertyList from "@/components/AnnotationBrowser/AnnotationProperties/PropertyList.vue";
 import store from "@/store";
 import annotationStore from "@/store/annotation";
 
@@ -25,7 +25,7 @@ import { IAnnotation } from "@/store/model";
     AnnotationToggles,
     AnnotationFilters,
     AnnotationList,
-    AnnotationProperty
+    PropertyList
   }
 })
 export default class AnnotationBrowser extends Vue {

@@ -70,7 +70,7 @@ import store from "@/store";
 import propertyStore from "@/store/properties";
 
 import TagFilterEditor from "@/components/TagFilterEditor.vue";
-import AnnotationProperty from "@/components/AnnotationProperties/Property.vue";
+import AnnotationProperty from "@/components/AnnotationBrowser/AnnotationProperties/Property.vue";
 
 @Component({
   components: {
@@ -78,7 +78,7 @@ import AnnotationProperty from "@/components/AnnotationProperties/Property.vue";
     AnnotationProperty
   }
 })
-export default class AnnotationProperties extends Vue {
+export default class PropertyList extends Vue {
   readonly store = store;
   readonly propertyStore = propertyStore;
 
