@@ -16,6 +16,13 @@
       <template v-slot:item.id="{ item }">
         <span>{{ annotations.indexOf(item) }}</span>
       </template>
+
+      <template
+        v-for="propertyId in propertyIds"
+        v-slot:[`item.${propertyId}`]="{ item }"
+      >
+        {{ getPropertyValueForAnnotation(item, propertyId) }}
+      </template>
     </v-data-table>
   </div>
 </template>
@@ -48,6 +55,12 @@ export default class AnnotationList extends Vue {
     return this.propertyStore.annotationListIds;
   }
 
+  getPropertyValueForAnnotation(annotation: IAnnotation, propertyId: string) {
+    return annotation.computedValues[propertyId] !== undefined
+      ? annotation.computedValues[propertyId]
+      : "N/A";
+  }
+
   get properties() {
     return [
       ...this.propertyStore.morphologicProperties,
@@ -78,8 +91,6 @@ export default class AnnotationList extends Vue {
       }))
     ];
   }
-
-  // TODO: all properties with property.list as header (even if not computed)
 
   @Emit("clickedTag")
   clickedTag(tag: string) {
