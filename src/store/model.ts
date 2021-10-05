@@ -180,8 +180,6 @@ export interface IAnnotation {
   };
   shape: string;
   coordinates: IGeoJSPoint[];
-
-  computedValues: any;
 }
 
 export interface IAnnotationConnection {
@@ -203,6 +201,7 @@ export interface IAnnotationFilter {
 // TODO: these really should be classes
 export interface ITagAnnotationFilter extends IAnnotationFilter {
   tags: string[];
+  shape: string;
 }
 
 export interface IPropertyAnnotationFilter extends IAnnotationFilter {
@@ -211,10 +210,11 @@ export interface IPropertyAnnotationFilter extends IAnnotationFilter {
     min: number;
     max: number;
   };
-  // these two fields should be exclusive
-  log: boolean;
-  cdf: boolean;
   // Whether to exclude or include annotations that don't have the property
+}
+
+export interface IIdAnnotationFilter extends IAnnotationFilter {
+  annotationIds: string[];
 }
 
 export interface IROIAnnotationFilter extends IAnnotationFilter {
@@ -232,8 +232,6 @@ export interface IAnnotationProperty {
 
   enabled: boolean;
   computed: boolean;
-
-  compute: (parameters: IAnnotationPropertyComputeParameters) => Promise<void>;
 }
 
 export interface ILayerDependentAnnotationProperty extends IAnnotationProperty {

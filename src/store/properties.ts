@@ -7,9 +7,10 @@ import {
 } from "vuex-module-decorators";
 import store from "./root";
 
-import main from "./index";
 import sync from "./sync";
 import annotation from "./annotation";
+
+import Worker from "worker-loader!@/store/properties.worker.ts";
 
 import {
   IAnnotation,
@@ -21,44 +22,33 @@ import {
   IAnnotationPropertyComputeParameters,
   ITagAnnotationFilter
 } from "./model";
+import { values } from "lodash-es";
+import { logWarning } from "@/utils/log";
 
 // TODO: mutations for properties
 // TODO: this means we probably need to regroup them all under one array
 @Module({ dynamic: true, store, name: "properties" })
 export class Properties extends VuexModule {
+  computedValues: {
+    [propertyId: string]: { annotationIds: string[]; values: number[] };
+  } = {};
   morphologicProperties: IMorphologicAnnotationProperty[] = [
     {
       id: "length",
       name: "Length",
 
       enabled: false,
-      computed: true,
+      computed: false,
 
-      requiredShape: "line",
-
-      async compute({ annotations }: IAnnotationPropertyComputeParameters) {
-        this.computed = false;
-        annotations.forEach((annotation: IAnnotation) => {
-          annotation.computedValues[this.id] = Math.random() * 1000;
-        });
-        this.computed = true;
-      }
+      requiredShape: "line"
     },
     {
       id: "perimeter",
       name: "Perimeter",
 
       enabled: false,
-      computed: true,
-      requiredShape: "polygon",
-
-      async compute({ annotations }: IAnnotationPropertyComputeParameters) {
-        this.computed = false;
-        annotations.forEach((annotation: IAnnotation) => {
-          annotation.computedValues[this.id] = Math.random() * 1000;
-        });
-        this.computed = true;
-      }
+      computed: false,
+      requiredShape: "polygon"
     }
   ];
 
@@ -67,7 +57,7 @@ export class Properties extends VuexModule {
       id: "numberOfConnected",
       name: "Number Of Connected",
 
-      enabled: true,
+      enabled: false,
       computed: false,
 
       independant: true,
@@ -75,17 +65,9 @@ export class Properties extends VuexModule {
       filter: {
         id: "numberOfConnectedFilter",
         tags: ["cell", "some tag"],
+        shape: "polygon",
         exclusive: true,
         enabled: true
-      },
-
-      async compute({
-        annotations,
-        connections
-      }: IAnnotationPropertyComputeParameters) {
-        annotations.forEach((annotation: IAnnotation) => {
-          annotation.computedValues[this.id] = connections?.length || 0;
-        });
       }
     }
   ];
@@ -98,30 +80,58 @@ export class Properties extends VuexModule {
       enabled: false,
       computed: false,
 
-      layer: 0,
-
-      async compute({
-        annotations,
-        image
-      }: IAnnotationPropertyComputeParameters) {
-        if (!image) {
-          return;
-        }
-        annotations.forEach((annotation: IAnnotation) => {
-          annotation.computedValues[this.id] = Math.random() * 100;
-        });
-      }
+      layer: 0
     }
   ];
 
-  filterIds: string[] = [];
   annotationListIds: string[] = [];
 
+  worker: Worker = new Worker();
+  initializedWorker: boolean = false;
+
   @Mutation
-  addFilterId(id: string) {
-    if (!this.filterIds.includes(id)) {
-      this.filterIds = [...this.filterIds, id];
+  updatePropertyValues({
+    propertyId,
+    annotationIds,
+    values
+  }: {
+    propertyId: string;
+    annotationIds: string[];
+    values: number[];
+  }) {
+    if (annotationIds.length !== values.length) {
+      logWarning("Inconsistent computed property results");
+      return;
     }
+    if (!this.computedValues[propertyId]) {
+      this.computedValues[propertyId] = { annotationIds, values };
+    } else {
+      for (let index = 0; index < annotationIds.length; ++index) {
+        const id = annotationIds[index];
+        const value = values[index];
+        const existingIndex = this.computedValues[
+          propertyId
+        ].annotationIds.indexOf(id);
+        if (existingIndex !== -1) {
+          this.computedValues[propertyId].values[existingIndex] = value;
+        } else {
+          this.computedValues[propertyId].annotationIds.push(id);
+          this.computedValues[propertyId].values.push(value);
+        }
+      }
+    }
+    this.computedValues = { ...this.computedValues };
+  }
+
+  @Action
+  onWorkerMessage(message: any) {
+    const propertyId: string = message.data.propertyId;
+    const property = this.getPropertyById(propertyId);
+    if (!property) {
+      return;
+    }
+    this.updatePropertyValues(message.data);
+    this.replaceProperty({ ...property, computed: true });
   }
 
   @Mutation
@@ -140,19 +150,115 @@ export class Properties extends VuexModule {
     }
   }
 
-  @Mutation
-  removeFilterId(id: string) {
-    if (this.filterIds.includes(id)) {
-      this.filterIds = this.filterIds.filter(testId => id !== testId);
-    }
-  }
-
   get properties(): IAnnotationProperty[] {
     return [
       ...this.morphologicProperties,
       ...this.relationalProperties,
       ...this.layerDependantProperties
     ];
+  }
+  @Mutation
+  hasInitializedWorker() {
+    this.initializedWorker = true;
+  }
+
+  @Mutation
+  replaceProperty(property: IAnnotationProperty) {
+    // TODO: ideally conserve index so the list doesn't shuffle around
+    // TODO: or sort alphabetically
+    const find = (prop: IAnnotationProperty) => prop.id === property.id;
+    const filter = (prop: IAnnotationProperty) => prop.id !== property.id;
+    if (this.morphologicProperties.find(find)) {
+      this.morphologicProperties = [
+        ...this.morphologicProperties.filter(filter),
+        property as IMorphologicAnnotationProperty
+      ];
+    } else if (this.relationalProperties.find(find)) {
+      this.relationalProperties = [
+        ...this.relationalProperties.filter(filter),
+        property as IRelationalAnnotationProperty
+      ];
+    } else if (this.layerDependantProperties) {
+      this.layerDependantProperties = [
+        ...this.layerDependantProperties.filter(filter),
+        property as ILayerDependentAnnotationProperty
+      ];
+    }
+  }
+
+  get getPropertyById() {
+    return (id: string) => {
+      const find = (prop: IAnnotationProperty) => prop.id === id;
+      const morph = this.morphologicProperties.find(find);
+      if (morph) {
+        return morph as IAnnotationProperty;
+      }
+      const relational = this.relationalProperties.find(find);
+      if (relational) {
+        return relational as IAnnotationProperty;
+      }
+      const layer = this.layerDependantProperties.find(find);
+      if (layer) {
+        return layer as IAnnotationProperty;
+      }
+      return null;
+    };
+  }
+
+  @Action
+  disableProperty(property: IAnnotationProperty) {
+    this.replaceProperty({ ...property, enabled: false });
+  }
+
+  @Action
+  enableProperty(property: IAnnotationProperty) {
+    this.replaceProperty({ ...property, enabled: true, computed: false });
+
+    const newProp = this.getPropertyById(property.id);
+    if (newProp) {
+      this.computeProperty(newProp);
+    }
+  }
+
+  get eligibleAnnotationsForPropertyId() {
+    return (id: string) => {
+      const morph = this.morphologicProperties.find(
+        (property: IMorphologicAnnotationProperty) => property.id === id
+      );
+      if (morph && morph.requiredShape) {
+        return annotation.annotations.filter(
+          (annotation: IAnnotation) => annotation.shape === morph.requiredShape
+        );
+      }
+      return annotation.annotations;
+    };
+  }
+
+  @Action
+  async computeProperty(property: IAnnotationProperty) {
+    if (!property.enabled) {
+      return;
+    }
+    if (!this.initializedWorker) {
+      this.worker.addEventListener("message", (event: any) => {
+        this.onWorkerMessage(event);
+      });
+      this.hasInitializedWorker();
+    }
+
+    this.replaceProperty({ ...property, computed: false });
+    const newProperty = this.getPropertyById(property.id);
+
+    const parameters: IAnnotationPropertyComputeParameters = {
+      annotations: this.eligibleAnnotationsForPropertyId(property.id),
+      connections: annotation.annotationConnections,
+      image: null // TODO:
+    };
+
+    this.worker.postMessage({
+      property: newProperty,
+      parameters
+    });
   }
 
   @Action
@@ -161,36 +267,34 @@ export class Properties extends VuexModule {
     newConnections: IAnnotationConnection[],
     image: any
   ) {
+    if (!this.initializedWorker) {
+      this.worker.addEventListener("message", event =>
+        this.onWorkerMessage(event)
+      );
+      this.hasInitializedWorker();
+    }
     const shapeFilter = (property: IMorphologicAnnotationProperty) =>
       property.requiredShape !== null &&
       property.requiredShape === newAnnotation.shape;
     const enabledFilter = (property: IAnnotationProperty) => property.enabled;
-    return Promise.all([
-      ...this.morphologicProperties
-        .filter(shapeFilter)
-        .filter(enabledFilter)
-        .map((property: IMorphologicAnnotationProperty) =>
-          property.compute({ annotations: [newAnnotation] })
-        ),
+    [
+      ...this.morphologicProperties.filter(shapeFilter),
+      ...this.relationalProperties,
       ...this.layerDependantProperties
-        .filter(enabledFilter)
-        .map((property: ILayerDependentAnnotationProperty) =>
-          property.compute({ annotations: [newAnnotation], image })
-        ),
-      ...this.relationalProperties
-        .filter(enabledFilter)
-        .map((property: IRelationalAnnotationProperty) =>
-          property.compute({
+    ]
+      .filter(enabledFilter)
+      .forEach((property: IAnnotationProperty) => {
+        this.replaceProperty({ ...property, computed: false });
+        const newProperty = this.getPropertyById(property.id);
+        this.worker.postMessage({
+          property: newProperty,
+          parameters: {
             annotations: [newAnnotation],
-            connections: newConnections
-          })
-        )
-    ]);
-  }
-
-  @Action
-  async handleNewProperty(property: IAnnotationProperty) {
-    console.error("NYI");
+            connections: newConnections,
+            image
+          }
+        });
+      });
   }
 }
 

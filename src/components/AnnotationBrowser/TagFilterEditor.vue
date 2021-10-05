@@ -22,13 +22,14 @@
           ></v-checkbox>
         </v-col>
       </v-row>
+      <v-row>
+        <v-select dense hide-details v-model="shape" :items="shapes"></v-select>
+      </v-row>
     </v-container>
   </div>
 </template>
 <script lang="ts">
 import { Vue, Component, Watch, Prop, VModel } from "vue-property-decorator";
-import store from "@/store";
-import propertyStore from "@/store/properties";
 import { ITagAnnotationFilter } from "@/store/model";
 import TagPicker from "@/components/TagPicker.vue";
 
@@ -38,11 +39,17 @@ import TagPicker from "@/components/TagPicker.vue";
   }
 })
 export default class TagFilterEditor extends Vue {
-  readonly store = store;
-  readonly propertyStore = propertyStore;
-
   @VModel({ type: Object }) filter!: ITagAnnotationFilter;
 
+  shapes: string[] = ["point", "polygon", "line"];
+
+  get shape() {
+    return this.filter.shape;
+  }
+
+  set shape(shape: string) {
+    this.filter = { ...this.filter, shape };
+  }
   get tags() {
     return this.filter.tags;
   }

@@ -32,8 +32,13 @@ import { Vue, Component, Prop, Emit } from "vue-property-decorator";
 import store from "@/store";
 import annotationStore from "@/store/annotation";
 import propertyStore from "@/store/properties";
+import filterStore from "@/store/filters";
 
-import { IAnnotation, IAnnotationProperty } from "@/store/model";
+import {
+  IAnnotation,
+  IAnnotationProperty,
+  IPropertyAnnotationFilter
+} from "@/store/model";
 
 @Component({
   components: {}
@@ -42,13 +47,14 @@ export default class AnnotationList extends Vue {
   readonly store = store;
   readonly annotationStore = annotationStore;
   readonly propertyStore = propertyStore;
+  readonly filterStore = filterStore;
 
   get annotations() {
     return this.annotationStore.annotations;
   }
 
   get filtered() {
-    return this.annotationStore.filteredAnnotations;
+    return this.filterStore.filteredAnnotations;
   }
 
   get propertyIds() {
@@ -56,9 +62,17 @@ export default class AnnotationList extends Vue {
   }
 
   getPropertyValueForAnnotation(annotation: IAnnotation, propertyId: string) {
-    return annotation.computedValues[propertyId] !== undefined
-      ? annotation.computedValues[propertyId]
-      : "N/A";
+    const { annotationIds, values } = this.propertyStore.computedValues[
+      propertyId
+    ];
+    if (!annotationIds || !values) {
+      return "N/A";
+    }
+    const index = annotationIds.indexOf(annotation.id);
+    if (index === -1) {
+      return "N/A";
+    }
+    return values[index];
   }
 
   get properties() {

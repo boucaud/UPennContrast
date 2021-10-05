@@ -26,53 +26,6 @@ export class Annotations extends VuexModule {
   // Connections from the current dataset and configuration
   annotationConnections: IAnnotationConnection[] = [];
 
-  // Annotation browser filters
-  tagFilter: ITagAnnotationFilter = {
-    id: "tagFilter",
-    exclusive: false,
-    enabled: true,
-    tags: []
-  };
-  propertyFilters: IPropertyAnnotationFilter[] = [];
-  roiFilters: IROIAnnotationFilter[] = [];
-
-  get filteredAnnotations() {
-    return this.annotations.filter((annotation: IAnnotation) => {
-      // tag filter
-      if (!this.tagFilter.enabled) {
-        return true;
-      }
-      const hasAllTags = this.tagFilter.tags.reduce(
-        (val: boolean, tag: string) => val && annotation.tags.includes(tag),
-        true
-      );
-      if (this.tagFilter.exclusive) {
-        return (
-          hasAllTags &&
-          annotation.tags
-            .map((tag: string) => this.tagFilter.tags.includes(tag))
-            .every((val: boolean) => val)
-        );
-      }
-      return hasAllTags;
-    });
-  }
-
-  @Mutation
-  public setTagFilter(filter: ITagAnnotationFilter) {
-    this.tagFilter = filter;
-  }
-
-  @Mutation
-  public addTagToTagFilter(tag: string) {
-    if (this.tagFilter.tags.includes(tag)) {
-      return;
-    }
-    this.tagFilter = Object.assign({}, this.tagFilter, {
-      tags: [...this.tagFilter.tags, tag]
-    });
-  }
-
   @Mutation
   public addAnnotation(value: IAnnotation) {
     this.annotations = [...this.annotations, value];

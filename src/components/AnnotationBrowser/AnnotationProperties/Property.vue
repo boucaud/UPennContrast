@@ -2,7 +2,16 @@
   <v-row>
     <!-- Enabled / Computed -->
     <v-col class="pa-0">
-      <v-checkbox dense hide-details v-model="property.enabled"></v-checkbox>
+      <v-checkbox
+        dense
+        hide-details
+        v-model="enabled"
+        :indeterminate="indeterminate"
+      ></v-checkbox>
+      <!-- <v-checkbox
+      dense hide-details v-else indeterminate>
+
+      </v-checkbox> -->
     </v-col>
     <!-- In list (???) -->
     <v-col class="pa-0">
@@ -47,11 +56,12 @@
 </template>
 
 <script lang="ts">
-import TagFilterEditor from "@/components/TagFilterEditor.vue";
+import TagFilterEditor from "@/components/AnnotationBrowser/TagFilterEditor.vue";
 import LayerSelect from "@/components/LayerSelect.vue";
 
 import { Vue, Component, Watch, Prop } from "vue-property-decorator";
 import propertyStore from "@/store/properties";
+import filterStore from "@/store/filters";
 
 @Component({
   components: {
@@ -61,23 +71,48 @@ import propertyStore from "@/store/properties";
 })
 export default class AnnotationProperty extends Vue {
   readonly propertyStore = propertyStore;
+  readonly filterStore = filterStore;
 
   @Prop()
   private readonly property!: any;
 
   get filter() {
-    return this.propertyStore.filterIds.includes(this.property.id);
+    return this.filterStore.filterIds.includes(this.property.id);
   }
 
   get list() {
     return this.propertyStore.annotationListIds.includes(this.property.id);
   }
 
+  get enabled() {
+    return this.property.enabled;
+  }
+
+  set enabled(val) {
+    {
+      if (val) {
+        Promise.resolve().then(() =>
+          this.propertyStore.enableProperty(this.property)
+        );
+      } else {
+        this.propertyStore.disableProperty(this.property);
+      }
+    }
+  }
+
+  get computed() {
+    return this.property.computed;
+  }
+
+  get indeterminate() {
+    return this.enabled && !this.computed;
+  }
+
   toggleFilter() {
     if (this.filter) {
-      this.propertyStore.removeFilterId(this.property.id);
+      this.filterStore.removeFilterId(this.property.id);
     } else {
-      this.propertyStore.addFilterId(this.property.id);
+      this.filterStore.addFilterId(this.property.id);
     }
   }
 

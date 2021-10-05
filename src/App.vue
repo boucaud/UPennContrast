@@ -53,6 +53,7 @@
 
 <script lang="ts">
 import axios from "axios";
+import Worker from "worker-loader!./Worker.js";
 import Menu from "./layout/Menu.vue";
 import UserMenu from "./layout/UserMenu.vue";
 import ServerStatus from "./components/ServerStatus.vue";

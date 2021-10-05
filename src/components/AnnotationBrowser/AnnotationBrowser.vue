@@ -15,10 +15,7 @@ import AnnotationToggles from "@/components/AnnotationBrowser/AnnotationToggles.
 import AnnotationFilters from "@/components/AnnotationBrowser/AnnotationFilters.vue";
 import AnnotationList from "@/components/AnnotationBrowser/AnnotationList.vue";
 import PropertyList from "@/components/AnnotationBrowser/AnnotationProperties/PropertyList.vue";
-import store from "@/store";
-import annotationStore from "@/store/annotation";
-
-import { IAnnotation } from "@/store/model";
+import filterStore from "@/store/filters";
 
 @Component({
   components: {
@@ -29,11 +26,9 @@ import { IAnnotation } from "@/store/model";
   }
 })
 export default class AnnotationBrowser extends Vue {
-  readonly store = store;
-  readonly annotationStore = annotationStore;
-
+  readonly filterStore = filterStore;
   clickedTag(tag: string) {
-    this.annotationStore.addTagToTagFilter(tag);
+    this.filterStore.addTagToTagFilter(tag);
   }
 }
 </script>

@@ -388,10 +388,7 @@ export default class AnnotationViewer extends Vue {
         Time: assign.Time
       },
       location,
-      coordinates: coordinates,
-      computedValues: {
-        centroid: simpleCentroid(coordinates)
-      }
+      coordinates: coordinates
     };
     return newAnnotation;
   }
@@ -503,6 +500,11 @@ export default class AnnotationViewer extends Vue {
     this.annotationLayer.removeAnnotation(annotation);
 
     const tool = this.selectedTool;
+    if (!tool) {
+      logError("No tool is selected");
+      return;
+    }
+
     const location = tool.values.annotation.coordinateAssignments;
     if (!location) {
       logError("Invalid snapping tool, annotation was not configured properly");

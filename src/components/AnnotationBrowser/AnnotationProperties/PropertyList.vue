@@ -69,7 +69,7 @@ import { Vue, Component, Watch, Prop } from "vue-property-decorator";
 import store from "@/store";
 import propertyStore from "@/store/properties";
 
-import TagFilterEditor from "@/components/TagFilterEditor.vue";
+import TagFilterEditor from "@/components/AnnotationBrowser/TagFilterEditor.vue";
 import AnnotationProperty from "@/components/AnnotationBrowser/AnnotationProperties/Property.vue";
 
 @Component({
