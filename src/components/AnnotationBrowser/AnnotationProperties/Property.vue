@@ -29,21 +29,20 @@
     </v-col>
     <v-col class="pa-0" cols="7">
       <v-row>
-        <v-col class="pa-0">
-          <v-subheader class="pa-0">
-            {{ property.name }}
-          </v-subheader>
+        <v-col class="pa-0 d-flex align-center">
+          <div class="text-subtitle-2 mb-0.875rem" v-text="property.name"></div>
         </v-col>
-        <v-col class="pa-0">
+        <v-col cols="7" class="pa-0">
           <layer-select
-            v-if="property.layer !== undefined"
-            v-model="property.layer"
+            v-if="propertyLayer !== undefined"
+            v-model="propertyLayer"
             label=""
             :any="false"
           ></layer-select>
           <tag-filter-editor
-            v-else-if="property.filter !== undefined"
-            :filter="property.filter"
+            v-if="propertyFilter !== undefined"
+            v-model="propertyFilter"
+            property="true"
           ></tag-filter-editor>
         </v-col>
       </v-row>
@@ -58,6 +57,7 @@ import LayerSelect from "@/components/LayerSelect.vue";
 import { Vue, Component, Watch, Prop } from "vue-property-decorator";
 import propertyStore from "@/store/properties";
 import filterStore from "@/store/filters";
+import { ITagAnnotationFilter } from "@/store/model";
 
 @Component({
   components: {
@@ -71,6 +71,22 @@ export default class AnnotationProperty extends Vue {
 
   @Prop()
   private readonly property!: any;
+
+  get propertyFilter() {
+    return this.property.filter;
+  }
+
+  set propertyFilter(value: ITagAnnotationFilter) {
+    this.propertyStore.replaceProperty({ ...this.property, filter: value });
+  }
+
+  get propertyLayer() {
+    return this.property.layer;
+  }
+
+  set propertyLayer(value) {
+    this.propertyStore.replaceProperty({ ...this.property, layer: value });
+  }
 
   get filter() {
     return this.filterStore.filterIds.includes(this.property.id);

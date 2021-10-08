@@ -2,7 +2,7 @@
   <div v-if="filter">
     <v-container>
       <v-row>
-        <v-col class="pa-1" cols="3">
+        <v-col class="pa-1" cols="3" v-if="!property">
           <v-checkbox
             dense
             hide-details
@@ -13,7 +13,7 @@
         <v-col class="pa-1">
           <tag-picker v-model="tags"> </tag-picker>
         </v-col>
-        <v-col class="pa-1" cols="3">
+        <v-col class="pa-1" cols="5">
           <v-checkbox
             dense
             hide-details
@@ -22,7 +22,7 @@
           ></v-checkbox>
         </v-col>
       </v-row>
-      <v-row>
+      <v-row v-if="!property">
         <v-select dense hide-details v-model="shape" :items="shapes"></v-select>
       </v-row>
     </v-container>
@@ -42,6 +42,9 @@ export default class TagFilterEditor extends Vue {
   @VModel({ type: Object }) filter!: ITagAnnotationFilter;
 
   shapes: string[] = ["point", "polygon", "line"];
+
+  @Prop()
+  readonly property!: boolean;
 
   get shape() {
     return this.filter.shape;

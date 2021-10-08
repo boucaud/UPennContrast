@@ -221,7 +221,8 @@ export interface IROIAnnotationFilter extends IAnnotationFilter {
   roi: IGeoJSPoint[];
 }
 export interface IAnnotationPropertyComputeParameters {
-  annotations: IAnnotation[];
+  annotationsToCompute: IAnnotation[];
+  additionalAnnotations: IAnnotation[];
   connections?: IAnnotationConnection[];
   image?: any; // TODO: arraybuffer?
 }

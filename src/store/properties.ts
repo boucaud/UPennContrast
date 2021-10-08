@@ -64,7 +64,24 @@ export class Properties extends VuexModule {
 
       filter: {
         id: "numberOfConnectedFilter",
-        tags: ["cell", "some tag"],
+        tags: [],
+        shape: "polygon",
+        exclusive: true,
+        enabled: true
+      }
+    },
+    {
+      id: "distanceToNearest",
+      name: "Distance To Nearest",
+
+      enabled: false,
+      computed: false,
+
+      independant: false,
+
+      filter: {
+        id: "distanceToNearestFilter",
+        tags: [],
         shape: "polygon",
         exclusive: true,
         enabled: true
@@ -250,7 +267,8 @@ export class Properties extends VuexModule {
     const newProperty = this.getPropertyById(property.id);
 
     const parameters: IAnnotationPropertyComputeParameters = {
-      annotations: this.eligibleAnnotationsForPropertyId(property.id),
+      annotationsToCompute: this.eligibleAnnotationsForPropertyId(property.id),
+      additionalAnnotations: annotation.annotations, // TODO: not always needed
       connections: annotation.annotationConnections,
       image: null // TODO:
     };
@@ -289,8 +307,9 @@ export class Properties extends VuexModule {
         this.worker.postMessage({
           property: newProperty,
           parameters: {
-            annotations: [newAnnotation],
-            connections: newConnections,
+            annotationsToCompute: [newAnnotation],
+            additionalAnnotations: annotation.annotations,
+            connections: annotation.annotationConnections, // TODO: not always needed to send all this
             image
           }
         });
