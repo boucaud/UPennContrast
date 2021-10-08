@@ -16,7 +16,7 @@
               <v-col v-for="header in headers" :key="header" class="pa-0">
                 {{ header }}
               </v-col>
-              <v-col class="pa-0" cols="8">
+              <v-col class="pa-0" cols="7">
                 Property
               </v-col>
             </v-row>
@@ -46,7 +46,7 @@
               <v-col v-for="header in headers" :key="header" class="pa-0">
                 {{ header }}
               </v-col>
-              <v-col class="pa-0" cols="8">
+              <v-col class="pa-0" cols="7">
                 Property
               </v-col>
             </v-row>
@@ -76,7 +76,7 @@
               <v-col v-for="header in headers" :key="header" class="pa-1">
                 {{ header }}
               </v-col>
-              <v-col class="pa-2" cols="8">
+              <v-col class="pa-2" cols="7">
                 Property
               </v-col>
             </v-row>
