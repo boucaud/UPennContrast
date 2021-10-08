@@ -439,7 +439,8 @@ export default class AnnotationViewer extends Vue {
     if (connectTo && connectTo.tags && connectTo.tags.length) {
       const annotations = this.annotationStore.annotations;
       // Find eligible annotations (matching tags and channel)
-      const connectToChannel = this.layers[connectTo.layer].channel;
+      const connectToChannel =
+        connectTo.layer === null ? null : this.layers[connectTo.layer].channel;
       const eligibleAnnotations = annotations.filter((value: IAnnotation) => {
         if (
           connectTo.layer !== null &&
@@ -573,16 +574,16 @@ export default class AnnotationViewer extends Vue {
       this.annotationLayer.mode(null);
       return;
     }
+
     if (this.roiFilter) {
-      this.toolsStore.setSelectedToolId(null);
+      if (this.selectedTool) {
+        this.toolsStore.setSelectedToolId(null);
+      }
       this.annotationLayer.mode("polygon");
       return;
     }
-    if (!this.selectedTool) {
-      this.annotationLayer.mode(null);
-      return;
-    }
-    switch (this.selectedTool.type) {
+
+    switch (this.selectedTool?.type) {
       case "create":
         const annotation = this.selectedTool.values.annotation;
         this.annotationLayer.mode(annotation?.shape);
@@ -590,8 +591,12 @@ export default class AnnotationViewer extends Vue {
       case "snap":
         this.annotationLayer.mode("polygon");
         break;
+      case null:
+      case undefined:
+        this.annotationLayer.mode(null);
+        break;
       default:
-        logWarning(`${this.selectedTool.type} tools are not supported yet`);
+        logWarning(`${this.selectedTool?.type} tools are not supported yet`);
         this.annotationLayer.mode(null);
     }
   }
