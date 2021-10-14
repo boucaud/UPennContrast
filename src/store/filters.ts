@@ -181,7 +181,7 @@ export class Filters extends VuexModule {
         }, true);
 
       if (!matchesProperties) {
-        return true;
+        return false;
       }
 
       // ROI filters
