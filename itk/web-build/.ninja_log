@@ -1,0 +1,9 @@
+# ninja log v5
+1	12836	0	Max/CMakeFiles/Max.dir/main.cxx.o	3515270d40fcd63b
+0	12944	0	Max/CMakeFiles/MaxWasm.dir/main.cxx.o	ce7271bab36d65ea
+1	23714	0	Threshold/CMakeFiles/ThresholdWasm.dir/main.cxx.o	9fcc80ee4493ddeb
+1	23848	0	Threshold/CMakeFiles/Threshold.dir/main.cxx.o	a301072d39b85363
+12838	117657	0	Max/Max.js	eb49805a47a34b61
+23848	122787	0	Threshold/Threshold.js	b2a1a204619efbc4
+12944	177276	0	Max/MaxWasm.js	9d7985c6bfa04db0
+23715	183125	0	Threshold/ThresholdWasm.js	1530b377e548693b
